@@ -62,7 +62,7 @@ class UserFE():
         )
         return(df_tmp)
         
-    def crt_time_of_day_propotions(self, df_system):
+    def crt_time_of_day_propotions(self, df_system, main_usage_ratio=0.5):
         """
         Args : 
             df_system : pd.DataFrame 
@@ -80,14 +80,33 @@ class UserFE():
         df_proportions = df_time_counts.divide(df_total_counts, axis=0)
         df_proportions = df_proportions.reset_index()
 
-        # 2. Create Final DataFrame
+        # 2.主時段判定，用0.5作為判定標準,大於0.5才是主要應用時間
+        main_usages = np.select(
+            [
+                df_proportions["Morning"]>=main_usage_ratio, 
+                df_proportions["Afternoon"]>=main_usage_ratio, 
+                df_proportions["Evening"]>=main_usage_ratio, 
+                df_proportions["Midnight"]>=main_usage_ratio
+            ],
+            [
+                "Morning",
+                "Afternoon",
+                "Evening",
+                "Midnight"
+            ],
+            "No Main Usage Time"
+        )
+        
+        # 3. Create Final DataFrame
         df_tmp = pd.DataFrame(
             {
                 "ID" : df_proportions["ID"],
                 "Morning" : df_proportions["Morning"],
                 "Afternoon" : df_proportions["Afternoon"],
                 "Evening" : df_proportions["Evening"],
-                "Midnight" : df_proportions["Midnight"]
+                "Midnight" : df_proportions["Midnight"],
+                "MainUsage" : main_usages
+
             }
         )
         return(df_tmp)
@@ -121,7 +140,28 @@ class UserFE():
             }
         )
         return(df_tmp)
-    
+    def crt_function_usage_breadth(self, df_system) :
+        """ The User's usage proportion in the system logs by day level
+         Args : 
+            df_system : pd.DataFrame 
+                with column "ID", "function"
+        Return : 
+            pd.DataFrame : 
+                with "FunctionUsageBreadth" 
+        """
+        # 1.使用廣度(使用過多少功能)
+        df_grouped = df_system.groupby("ID").agg(
+            FunctionUsageBreadth=("function", "nunique")
+        ).reset_index()
+
+        # 2. Create Final DataFrame
+        df_tmp = pd.DataFrame(
+            {
+                "ID" : df_grouped["ID"],
+                "FunctionUsageBreadth" : df_grouped["FunctionUsageBreadth"]
+            }
+        )
+        return(df_tmp)
 
         
     def crt_user_features(self):
@@ -131,8 +171,9 @@ class UserFE():
         df_user = df_user.merge(self.df_system.loc[:,["ID", "place of residence"]].drop_duplicates(), on="ID", how="left")
         df_user = df_user.merge(self.crt_user_type(self.df_system), on="ID", how="left")
         df_user = df_user.merge(self.crt_total_usage(self.df_system), on="ID", how="left")
-        df_user = df_user.merge(self.crt_time_of_day_propotions(self.df_system), on="ID", how="left")
+        df_user = df_user.merge(self.crt_time_of_day_propotions(self.df_system, main_usage_ratio=0.5), on="ID", how="left")
         df_user = df_user.merge(self.crt_day_propotion(self.df_system), on="ID", how="left")
+        df_user = df_user.merge(self.crt_function_usage_breadth(self.df_system), on="ID", how="left")
 
         return(df_user)
         

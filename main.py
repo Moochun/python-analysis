@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# =============================================
 # # Data load and clean 
+# =============================================
 
 # In[15]:
 
@@ -73,10 +75,11 @@ fig.update_layout(
 )
 fig.show()
 
-
+# =============================================
 # # Customer segment 
+# =============================================
 
-# ## 黏著度 + 使用特徵數量
+# ## 黏著度 + 使用特徵數量 ================================
 
 # In[22]:
 
@@ -113,9 +116,9 @@ fig.add_shape(type='line', x0=df_user['CustomerStickness'].min(), y0=median_func
 fig.show()
 
 
-# ## 黏著度+使用function
+# ## 黏著度+使用function ===========================================
 
-# ### Kmeans
+# ### Kmeans #######
 
 # In[48]:
 
@@ -138,7 +141,7 @@ plt.ylabel(col_b_ratio)
 plt.show()
 
 
-# ### 一般的散佈圖
+# ### 一般的散佈圖 
 
 # In[44]:
 
@@ -193,7 +196,7 @@ df_user["group"] = np.select(
 print(df_user["group"].value_counts())
 
 
-# ### Cluster上色後的散佈圖
+# ### Cluster上色後的散佈圖 #######
 
 # In[49]:
 
@@ -248,7 +251,7 @@ df_user["group"] = np.select(
 print(df_user["cluster"].value_counts())
 
 
-# ### Infrequent User
+# ### Infrequent User #######
 
 # In[51]:
 
@@ -275,10 +278,10 @@ report_infrquent.show_html('report/SweetvizUserInfrequent.html')
 
 df_data[df_data.ID.isin(df_user.ID[df_user["cluster"]==0])]
 
-
+# =============================================
 # # Function Usage
-
-# ## Function 被呼叫數量直方圖
+# =============================================
+# ## Function 被呼叫數量直方圖 ====================================================
 
 # In[61]:
 
@@ -304,7 +307,7 @@ fig.update_layout(
 fig.show()
 
 
-# ## Function user數量直方圖
+# ## Function user數量直方圖 ====================================================
 
 # In[69]:
 

@@ -112,7 +112,7 @@ class UserFE():
         return(df_tmp)
 
     def crt_day_propotion(self, df_system):
-        """" The User's usage proportion in the system logs by day level
+        """" 
         Args : 
             df_system : pd.DataFrame 
                 with column "ID", "timestamp"
@@ -141,7 +141,7 @@ class UserFE():
         )
         return(df_tmp)
     def crt_function_usage_breadth(self, df_system) :
-        """ The User's usage proportion in the system logs by day level
+        """ 
          Args : 
             df_system : pd.DataFrame 
                 with column "ID", "function"
@@ -163,7 +163,45 @@ class UserFE():
         )
         return(df_tmp)
 
+    def crt_usage_growth_ratio(self, df_system, start_month=4, end_month=6):
+        """ The User's usage proportion in the system logs by day level
+         Args : 
+            df_system : pd.DataFrame 
+                with column "ID", "month"
+        Return : 
+            pd.DataFrame : 
+                with "growth_ratio" 
+                # -1 : 代表前個月是使用0次, 0:代表後個月是使用0次
+        """
+        # 1. 計算每個ID在每月的使用次數
+        usage_counts = df_system.groupby(['ID', 'month']).size().unstack(fill_value=0)
+        df_growth = (usage_counts[end_month]/usage_counts[start_month]).reset_index()
+        df_growth[0].replace([np.inf, -np.inf, np.nan], -1, inplace=True) # 將divide 0 的 Inf 設定成-1
+
+        # 2. Growth ratio labels, with declin, No Use and Growth 
+        growth_label = np.select(
+            [
+                (df_growth[0]<=1) & (df_growth[0]!=-1) ,
+                df_growth[0]==-1,
+            ],
+            [
+                "Decline",
+                "No Use"
+            ],
+            "Growth"
+        )
+         
+        # 3. Create Final DataFrame
+        df_tmp = pd.DataFrame(
+            {
+                "ID" : df_growth["ID"],
+                f"growth_ratio_{start_month}_{end_month}" : df_growth[0],
+                f"growth_label_{start_month}_{end_month}" : growth_label
+            }
+        )
         
+        return(df_tmp)
+    
     def crt_user_features(self):
         """
         """
@@ -174,6 +212,9 @@ class UserFE():
         df_user = df_user.merge(self.crt_time_of_day_propotions(self.df_system, main_usage_ratio=0.5), on="ID", how="left")
         df_user = df_user.merge(self.crt_day_propotion(self.df_system), on="ID", how="left")
         df_user = df_user.merge(self.crt_function_usage_breadth(self.df_system), on="ID", how="left")
+        df_user = df_user.merge(self.crt_usage_growth_ratio(self.df_system, start_month=4, end_month=5), on="ID", how="left")
+        df_user = df_user.merge(self.crt_usage_growth_ratio(self.df_system, start_month=5, end_month=6), on="ID", how="left")
+        df_user = df_user.merge(self.crt_usage_growth_ratio(self.df_system, start_month=4, end_month=6), on="ID", how="left")
 
         return(df_user)
         
